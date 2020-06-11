@@ -1,0 +1,25 @@
+Vagrant.configure("2") do |config|
+    config.vm.box = "kalilinux/rolling"
+    config.vm.network "private_network", ip: "192.168.50.1"
+
+    if Vagrant.has_plugin?("vagrant-vbguest") then
+      config.vbguest.auto_update = true
+    end
+
+    config.vm.provider "virtualbox" do |vb|
+      vb.name = "Kali Linux"
+      vb.gui = true
+      vb.memory = 8192
+      vb.cpus = 2
+      vb.customize ["modifyvm", :id, "--usbxhci", "on"]
+    end
+
+    config.vm.provision "ansible_local" do |ansible|
+      ansible.install = true
+      ansible.playbook = "playbook.yml"
+      ansible.become = true
+      ansible.verbose = true
+      ansible.limit = "all"
+      ansible.raw_arguments = [ '-e', 'ansible_python_interpreter=/usr/bin/python' ]
+    end
+end
