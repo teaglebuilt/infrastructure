@@ -1,0 +1,44 @@
+- hosts: 10.10.10.1
+  tags: jenkins
+  tasks:
+    - name: Install Java 8
+      yum:
+        name: "{{java.VERSION}}"
+        state: present
+      become: true
+
+    - name: Correct the alternatives to change default Java version.
+      alternatives:
+        name: java
+        link: /bin/java
+        path: "{{java.ALTERNATIVES}}"
+
+    - name: Download Jenkins Repo
+      get_url:
+        url: "{{jenkins.repo_url}}"
+        dest: /etc/yum.repos.d/jenkins.repo
+      become: true
+
+    - name: Import GPG Key
+      rpm_key:
+        state: present
+        key: "{{jenkins.gpg_key}}"
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: present
+
+    - name: Change Jenkins Java Options
+      lineinfile:
+        dest=/etc/sysconfig/jenkins
+        regexp=^JENKINS_JAVA_OPTIONS=
+        line=JENKINS_JAVA_OPTIONS="{{jenkins.JAVA_OPTIONS}}"
+      become: true
+
+    - name: Start & Enable Jenkins
+      service:
+        name: jenkins
+        state: started
+        enabled: yes
+
