@@ -1,30 +1,33 @@
-- hosts: 10.10.10.1
+- hosts: all
   tags: jenkins
   tasks:
     - name: Install Java 8
       yum:
-        name: "{{java.VERSION}}"
+        name: "java-1.8.0-openjdk"
         state: present
       become: true
 
     - name: Correct the alternatives to change default Java version.
+      become: true
       alternatives:
         name: java
-        link: /bin/java
-        path: "{{java.ALTERNATIVES}}"
+        link: /usr/bin/java
+        path: "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.144-0.b01.el7_4.x86_64/jre/bin/java"
 
     - name: Download Jenkins Repo
       get_url:
-        url: "{{jenkins.repo_url}}"
+        url: "https://pkg.jenkins.io/redhat/jenkins.repo"
         dest: /etc/yum.repos.d/jenkins.repo
       become: true
 
     - name: Import GPG Key
+      become: true
       rpm_key:
         state: present
-        key: "{{jenkins.gpg_key}}"
+        key: "https://pkg.jenkins.io/redhat/jenkins.io.key"
 
     - name: Install Jenkins
+      become: true
       yum:
         name: jenkins
         state: present
@@ -33,12 +36,12 @@
       lineinfile:
         dest=/etc/sysconfig/jenkins
         regexp=^JENKINS_JAVA_OPTIONS=
-        line=JENKINS_JAVA_OPTIONS="{{jenkins.JAVA_OPTIONS}}"
+        line=JENKINS_JAVA_OPTIONS="-Djava.awt.headless=true -Djenkins.install.runSetupWizard=false"
       become: true
 
     - name: Start & Enable Jenkins
+      become: true
       service:
         name: jenkins
         state: started
         enabled: yes
-
